@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S-Plane to Z-Plane Mapping</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.1.0/math.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-around;
+    }
+
+    .control-panel {
+      margin-bottom: 20px;
+    }
+
+    .slider-container {
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>Mapping of Variables from S-plane to Z-plane</h2>
+
+  <!-- Control Panel -->
+  <div class="control-panel">
+    <div class="slider-container">
+      <label for="realSlider">Real Part of S: <span id="realValue">0</span></label>
+      <input type="range" id="realSlider" min="-5" max="5" step="0.1" value="0" oninput="updateFromSliders()">
+    </div>
+    <div class="slider-container">
+      <label for="imaginarySlider">Imaginary Part of S: <span id="imaginaryValue">0</span></label>
+      <input type="range" id="imaginarySlider" min="-5" max="5" step="0.1" value="0" oninput="updateFromSliders()">
+    </div>
+    <div class="slider-container">
+      <label for="samplingTimeSlider">Sampling Time (T): <span id="samplingTimeValue">1</span></label>
+      <input type="range" id="samplingTimeSlider" min="0.1" max="5" step="0.1" value="1" oninput="updateFromSliders()">
+    </div>
+  </div>
+
+  <!-- Graphs -->
+  <div class="container">
+    <div id="sPlane" style="width: 45%; height: 400px;"></div>
+    <div id="zPlane" style="width: 45%; height: 400px;"></div>
+  </div>
+
+  <script>
+    let realS = 0;
+    let imaginaryS = 0;
+    let T = 1;
+
+    function mapStoZ(s, T) {
+      // Calculate z from s using z = e^(sT)
+      const z = math.exp(math.multiply(s, T));
+      return z;
+    }
+
+    function updateFromSliders() {
+      // Get values from sliders
+      realS = parseFloat(document.getElementById("realSlider").value);
+      imaginaryS = parseFloat(document.getElementById("imaginarySlider").value);
+      T = parseFloat(document.getElementById("samplingTimeSlider").value);
+
+      // Update displayed values
+      document.getElementById("realValue").textContent = realS;
+      document.getElementById("imaginaryValue").textContent = imaginaryS;
+      document.getElementById("samplingTimeValue").textContent = T;
+
+      // Update graphs
+      updateGraphs();
+    }
+
+    function updateGraphs() {
+      // Define s as a complex number
+      const s = math.complex(realS, imaginaryS);
+
+      // Map s to z
+      const z = mapStoZ(s, T);
+
+      // Update the S-plane graph
+      Plotly.newPlot('sPlane', [{
+        x: [realS],
+        y: [imaginaryS],
+        mode: 'markers',
+        type: 'scatter',
+        name: 'S'
+      }], {
+        title: 'S-Plane (Click to Select a Point)',
+        xaxis: { title: 'Real(S)', range: [-5, 5] },
+        yaxis: { title: 'Imaginary(S)', range: [-5, 5] }
+      });
+
+      // Update the Z-plane graph
+      Plotly.newPlot('zPlane', [{
+        x: [z.re],
+        y: [z.im],
+        mode: 'markers',
+        type: 'scatter',
+        name: 'Z'
+      }], {
+        title: 'Z-Plane',
+        xaxis: { title: 'Real(Z)', range: [-10, 10] },
+        yaxis: { title: 'Imaginary(Z)', range: [-10, 10] }
+      });
+
+      // Enable selecting points on the S-plane
+      document.getElementById('sPlane').on('plotly_click', function (data) {
+        const point = data.points[0];
+        realS = point.x;
+        imaginaryS = point.y;
+        document.getElementById('realSlider').value = realS;
+        document.getElementById('imaginarySlider').value = imaginaryS;
+        document.getElementById("realValue").textContent = realS;
+        document.getElementById("imaginaryValue").textContent = imaginaryS;
+        updateGraphs();
+      });
+    }
+
+    // Initialize the graphs
+    updateGraphs();
+  </script>
+
+</body>
+
+</html>9
